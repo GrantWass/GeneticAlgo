@@ -10,7 +10,7 @@ population = []  # Population of solutions (2D list of 100 1D solutions)
 parents = []  # Top 50 best solutions 
 population_fits = []  # Fitness values of each solution
 N = 100  # Number of solutions in the population
-mutate_rate = 0.02  # Probability of mutation occurring
+mutate_rate = 0.05  # Probability of mutation occurring
 length = len(target_sequence)  # Length of a sequence of coordinates/solution
 
 
@@ -21,8 +21,12 @@ Use the sum of squared differences between each coordinate in the solution and t
 Store the fitness values in 'population_fits'.
 """
 def fit_function():
-    # TODO: Implement fitness function
-    pass  
+    global population_fits
+    population_fits.clear()
+    for sample in population: # doesn't have to be an index since we aren't modifying
+        fitness_score = sum((sample[j] - target_sequence[j])**2 for j in range(len(sample)))
+        population_fits.append(fitness_score)
+
 
 
 """
@@ -30,8 +34,9 @@ Generate the initial population of N random solutions.
 Each solution should be a list of 'length' numbers ranging from -10 to 10.
 """
 def Gen0():
-    # TODO: Implement initialization of generation 0
-    pass 
+    for _ in range(N):
+        solution = [random.randint(-10, 10) for _ in range(length)]
+        population.append(solution)
 
 
 """
@@ -42,9 +47,10 @@ The 'parents' list should be updated with the selected solutions and contain N/2
 Note, the 'parents' list should be cleared before adding new solutions.
 """
 def prune():
-    # TODO: Implement selection (pruning)
-    pass  
-
+    global parents
+    parents.clear()
+    sorted_population = sorted(zip(population, population_fits), key=lambda x: x[1])  # sorts by fitness
+    parents = [sol for sol, _ in sorted_population[:N//2]]  # select best 50%
 
 """
 Generate new solutions by combining halves of two parent solutions.
@@ -53,9 +59,13 @@ The 'population' list should be updated with the new solutions.
 Note, the 'population' list should be cleared before adding new solutions.
 """
 def reproduce():
-    # TODO: Implement reproduction (crossover)
-    pass
-
+    global population
+    population.clear()
+    for _ in range(N):
+        p1, p2 = random.sample(parents, 2)  # picks two random parents
+        crossover = length // 2 # crossover point
+        child = p1[:crossover] + p2[crossover:]
+        population.append(child)
 
 """
 Introduce random mutations into the population.
@@ -63,8 +73,11 @@ Each coordinate in every solution has a 2% chance ('mutate_rate') of being mutat
 For each mutated coordinate, a small random change is either -1, 0, or 1.
 """
 def mutate():
-    # TODO: Implement mutation
-    pass
+    global population
+    for i in range(len(population)): # this has to be an index since a for each won't mutate in place
+        for j in range(len(population[i])): 
+            if random.random() < mutate_rate:
+                population[i][j] += random.choice([-1, 0, 1])
 
 
 """
@@ -77,7 +90,6 @@ def find_best():
         if population_fits[i] < best_fit:
             best_fit = population_fits[i]
             best = population[i]
-    print(best)
     return best
 
 """
@@ -111,12 +123,13 @@ def visualization(best, generation):
 
 # Main loop to run the genetic algorithm
 Gen0()
-for generation in range(200):
+for generation in range(300):
     print(f"Generation {generation}")
     fit_function()
     prune()
     reproduce()
     mutate()
+    fit_function()
     best = find_best()
     visualization(best, generation)
 
